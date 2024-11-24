@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar artículos</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h3>Buscador de artículos en MercadoLibre</h3>
+    <form id="searchForm">
+        <div>
+            <label for="articulo">Buscar artículo</label>
+            <input type="text" id="articulo" name="articulo" placeholder="Ingrese un artículo" required>
+        </div>
+        <div>
+            <button type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <div id="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Buscando...</p>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="result" style="display: none;">
+        <div id="recomendacion" class="recomendacion"></div>
+        <div id="totalArticulos" class="total-articulos"></div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const articulo = document.getElementById('articulo').value;
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const result = document.getElementById('result');
+            const recomendacion = document.getElementById('recomendacion');
+            const totalArticulos = document.getElementById('totalArticulos');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            try {
+                const response = await axios.post('/', new URLSearchParams({articulo: articulo}));
+                if (response.data.error) {
+                    error.textContent = response.data.error;
+                    error.style.display = 'block';
+                } else {
+                    recomendacion.innerHTML = `<h2>Recomendación: ${response.data.recomendacion}</h2>`;
+                    totalArticulos.innerHTML = `<p>Se encontraron ${response.data.total} artículos.</p>`;
+                    result.style.display = 'block';
+                    recomendacion.className = `recomendacion recomendacion-${getRecomendacionClass(response.data.recomendacion)}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                error.textContent = 'Ocurrió un error al realizar la búsqueda.';
+                error.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        function getRecomendacionClass(recomendacion) {
+            if (recomendacion.includes('No se recomienda')) return 'no';
+            if (recomendacion.includes('Considera venderlo')) return 'medio';
+            return 'si';
+        }
+    </script>
+</body>
+</html>
